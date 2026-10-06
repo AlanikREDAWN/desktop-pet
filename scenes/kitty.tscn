@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://dfna35k5wver3"]
+
+[ext_resource type="Script" uid="uid://b35u1220ifohg" path="res://scripts/kitty.gd" id="1_010mf"]
+[ext_resource type="Texture2D" uid="uid://b7ste7qjc7f74" path="res://assets/sleepingCat.png" id="1_lwgw5"]
+[ext_resource type="Texture2D" uid="uid://by7d55mkp77s2" path="res://assets/catFrames/cat1.png" id="2_010mf"]
+[ext_resource type="Texture2D" uid="uid://c61obgvsa4f4g" path="res://assets/catFrames/cat2.png" id="3_kqa1l"]
+[ext_resource type="Texture2D" uid="uid://7bojgn44x4aq" path="res://assets/catFrames/cat3.png" id="4_vuvx8"]
+[ext_resource type="Texture2D" uid="uid://bshqkxje2drhg" path="res://assets/catFrames/cat4.png" id="5_8h6b3"]
+[ext_resource type="Texture2D" uid="uid://cw4lnesoatdc7" path="res://assets/catFrames/cat5.png" id="6_hex43"]
+[ext_resource type="Texture2D" uid="uid://cu6ukta3qxox7" path="res://assets/catFrames/cat6.png" id="7_2foft"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_qo6jj"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_lwgw5")
+}],
+"loop": 1,
+"name": &"Idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_010mf")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_kqa1l")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_vuvx8")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_8h6b3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_hex43")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_2foft")
+}],
+"loop": 1,
+"name": &"Walk",
+"speed": 10.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lwgw5"]
+size = Vector2(3437.5, 2881.25)
+
+[node name="kitty" type="Node2D" unique_id=1788749488]
+script = ExtResource("1_010mf")
+
+[node name="kittyNode" type="Node2D" parent="." unique_id=347614697]
+position = Vector2(100, 100)
+scale = Vector2(0.05, 0.05)
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="kittyNode" unique_id=398403892]
+scale = Vector2(1.0000001, 1.0000001)
+sprite_frames = SubResource("SpriteFrames_qo6jj")
+animation = &"Walk"
+frame = 2
+frame_progress = 0.04355187
+
+[node name="Area2D" type="Area2D" parent="kittyNode" unique_id=405826958]
+scale = Vector2(1.0000001, 1.0000001)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="kittyNode/Area2D" unique_id=182196043]
+position = Vector2(-106.25, -96.875)
+shape = SubResource("RectangleShape2D_lwgw5")
