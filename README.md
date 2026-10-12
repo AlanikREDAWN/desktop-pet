@@ -16,4 +16,4 @@
 	- [ ] after releasing, cat returns to taskbar
 - [ ] while sitting still, cat faces mouse
 - [ ] save and load position
-- [ ] on cat spawn, falls to taskbar/bottom of screen
+- [x] on cat spawn, falls to taskbar/bottom of screen
