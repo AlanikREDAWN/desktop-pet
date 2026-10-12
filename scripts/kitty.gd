@@ -1,15 +1,21 @@
 extends Node2D
 
 var speed = 300
+var fall_speed = 500
 var direction = Vector2(1, 0)
 var screen_size = Vector2()
 var window_size = Vector2(200, 200)
 
 var idle_timer = 0.0
 var is_idling = false
+var is_walking = false
+var is_falling = true
 
 var is_dragging = false
 var drag_offset = Vector2()
+
+var usable 
+var taskbar_y
 
 @onready var kitty_sprite: AnimatedSprite2D = $kittyNode/AnimatedSprite2D
 @onready var area: Area2D = $kittyNode/Area2D
@@ -21,8 +27,12 @@ func _on_area_input(_viewport, event, _shape_idx):
 			var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 			var win_pos = Vector2(DisplayServer.window_get_position())
 			drag_offset = mouse_pos - win_pos
-		else:
+		elif !event.pressed:
 			is_dragging = false
+			is_falling = true
+			is_walking = false
+		#else:
+			#is_dragging = false
 
 func maybe_idle():
 	if randf() < 0.3:
@@ -37,9 +47,13 @@ func maybe_idle():
 
 func _ready() -> void:
 	screen_size = Vector2(DisplayServer.screen_get_size())
+	usable = DisplayServer.screen_get_usable_rect()
+	taskbar_y = usable.end.y
 	kitty_sprite.play("Walk")
 	kitty_sprite.flip_h = !kitty_sprite.flip_h
 	area.input_event.connect(_on_area_input)
+	
+	
 
 func wait(seconds: float) -> void:
 	await get_tree().create_timer(seconds).timeout
@@ -106,6 +120,8 @@ func _physics_process(delta: float) -> void:
 			#print("right")
 	else:
 		kitty_sprite.play("Walk")
+		#is_falling = true
+		#is_walking = false
 	
 	if is_idling:
 		idle_timer -= delta
@@ -114,18 +130,34 @@ func _physics_process(delta: float) -> void:
 			speed = 300
 			kitty_sprite.play("Walk")
 		return
-	
+		
 	var window_position = Vector2(DisplayServer.window_get_position())
-	window_position += direction * speed * delta
-	#print(window_position)
-	window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
-	window_position.y = clamp(window_position.y, 0, screen_size.y - window_size.y)
-	DisplayServer.window_set_position((Vector2i(window_position)))
 	
-	if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
-		direction.x *= -1
-		kitty_sprite.flip_h = !kitty_sprite.flip_h
-		maybe_idle()
-	if window_position.y <= 0 or window_position.y >= screen_size.y - window_size.y:
-		direction.y *= 1
-		maybe_idle()
+	if is_walking:
+		kitty_sprite.play("Walk")
+		
+		window_position += direction * speed * delta
+		window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
+		window_position.y = clamp(window_position.y, 0, taskbar_y - window_size.y)
+		#DisplayServer.window_set_position((Vector2i(window_position)))
+		
+		if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
+			direction.x *= -1
+			kitty_sprite.flip_h = !kitty_sprite.flip_h
+			maybe_idle()
+		#if window_position.y <= 0 or window_position.y >= screen_size.y - window_size.y:
+			#direction.y *= 1
+			#maybe_idle()
+			
+	if is_falling:
+		kitty_sprite.play("Idle")
+		if window_position.y >= taskbar_y - window_size.y:
+			is_falling = false
+			is_walking = true
+			print("not falling")
+		#window_position.y = taskbar_y - window_size.y
+		
+
+		window_position.y += fall_speed * delta
+		#DisplayServer.window_set_position((Vector2i(window_position)))
+	DisplayServer.window_set_position((Vector2i(window_position)))
