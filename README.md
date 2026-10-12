@@ -1,1 +1,1 @@
-# desktop-pet
+# Desktop Kitty

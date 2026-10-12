@@ -40,14 +40,72 @@ func _ready() -> void:
 	kitty_sprite.play("Walk")
 	kitty_sprite.flip_h = !kitty_sprite.flip_h
 	area.input_event.connect(_on_area_input)
+
+func wait(seconds: float) -> void:
+	await get_tree().create_timer(seconds).timeout
+
+func simulate_key(keycode: Key):
+	var press_event = InputEventKey.new()
+	press_event.keycode = keycode
+	press_event.pressed = true
+	Input.parse_input_event(press_event)
+	print("press event")
 	
+	#wait(0.25)
+	
+	var release_event = InputEventKey.new()
+	release_event.keycode = keycode
+	press_event.pressed = false
+	Input.parse_input_event(release_event)
+	print("release event")
+
+#func nextTrack() -> void:
+	#var os_name = OS.get_name()
+	#
+	#match os_name:
+		#"Windows":
+			#nextTrackWindows()
+		#"macOS":
+			#nextTrackMacOS()
+		#"Linux":
+			#nextTrackLinux()
+		#_:
+			#print("Unsupported OS for media controls: ", os_name)
+	#simulate_key(KEY_MEDIANEXT)
+	#print("pressed")
+
+#func nextTrackWindows() -> void:
+	#var script = "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys([char]176)"
+	#OS.execute("powershell", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", script], [], false)
+#
+#func nextTrackMacOS() -> void:
+	#var script = "import ApplicationServices; " + \
+		#"let src = CGEventSource(stateID: .hidSystemState); " + \
+		#"let down = CGEvent(keyboardEventSource: src, virtualKey: 0x34, keyDown: true); " + \
+		#"let up = CGEvent(keyboardEventSource: src, virtualKey: 0x34, keyDown: false); " + \
+		#"down?.post(tap: .cghidEventTap); up?.post(tap: .cghidEventTap);"
+	#OS.execute("swift", ["-e", script], [], false)
+#
+#func nextTrackLinux() -> void:
+	#OS.execute("playerctl", ["next"], [], false)
+
+#func _input(event: InputEvent) -> void:
+	#if event is InputEventKey:
+		#print("Physical Keycode: ", event.physical_keycode)
+		#print("Keycode: ", event.keycode)
+		#print("Key String: ", OS.get_keycode_string(event.keycode))
 
 func _physics_process(delta: float) -> void:
 	if is_dragging:
+		kitty_sprite.play("Idle")
 		var mouse_pos = Vector2(DisplayServer.mouse_get_position())
 		var new_win_pos = mouse_pos - drag_offset
 		DisplayServer.window_set_position(Vector2i(new_win_pos))
-		return
+		#if Input.is_action_just_pressed("right"):
+			#nextTrack()
+			#print("right")
+	else:
+		kitty_sprite.play("Walk")
 	
 	if is_idling:
 		idle_timer -= delta
@@ -59,7 +117,7 @@ func _physics_process(delta: float) -> void:
 	
 	var window_position = Vector2(DisplayServer.window_get_position())
 	window_position += direction * speed * delta
-	print(window_position)
+	#print(window_position)
 	window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
 	window_position.y = clamp(window_position.y, 0, screen_size.y - window_size.y)
 	DisplayServer.window_set_position((Vector2i(window_position)))
