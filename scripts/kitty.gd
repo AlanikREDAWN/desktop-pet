@@ -6,6 +6,7 @@ var direction = Vector2(1, 0)
 var screen_size = Vector2()
 var window_size = Vector2(200, 200)
 
+var centered = false
 var idle_timer = 0.0
 #var is_idling = false
 #var is_walking = false
@@ -21,11 +22,19 @@ var last_mouse = Vector2()
 #var velocity = Vector2()
 var velocity = Vector2()
 
-enum KittyStates { IDLE, WALK, FALL, DRAG }
+enum KittyStates { IDLE, WALK, FALL, DRAG, FOLLOW, SLEEP }
 var current_state = KittyStates.FALL
+
+var last_mouse_pos: int
 
 @onready var kitty_sprite: AnimatedSprite2D = $kittyNode/AnimatedSprite2D
 @onready var area: Area2D = $kittyNode/Area2D
+
+func _input(event):
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		print("FOLLOW")
+		if current_state != KittyStates.DRAG:
+			print("TIME TO FOLLOW")
 
 func _on_area_input(_viewport, event, _shape_idx):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -65,6 +74,7 @@ func _ready() -> void:
 	kitty_sprite.play("Walk")
 	kitty_sprite.flip_h = !kitty_sprite.flip_h
 	area.input_event.connect(_on_area_input)
+	last_mouse_pos = DisplayServer.mouse_get_position().x
 
 	
 	
@@ -131,7 +141,7 @@ func _physics_process(delta: float) -> void:
 	
 	match current_state:
 		KittyStates.DRAG:
-			print("State: Drag")
+			#print("State: Drag")
 			kitty_sprite.play("Idle")
 			
 			var mouse_pos = Vector2(DisplayServer.mouse_get_position())
@@ -141,9 +151,9 @@ func _physics_process(delta: float) -> void:
 			#drag_offset = mouse_pos - win_pos
 			
 			var new_win_pos = mouse_pos - drag_offset
-			print("mouse pos: ", mouse_pos)
-			print("drag offset: ", drag_offset)
-			print("new win pos: ", new_win_pos)
+			#print("mouse pos: ", mouse_pos)
+			#print("drag offset: ", drag_offset)
+			#print("new win pos: ", new_win_pos)
 		
 			#var mouse = Vector2(DisplayServer.mouse_get_position())
 			#velocity = (mouse - last_mouse) / delta
@@ -155,7 +165,7 @@ func _physics_process(delta: float) -> void:
 			DisplayServer.window_set_position(Vector2i(new_win_pos))
 		
 		KittyStates.IDLE:
-			print("State: Idle")
+			#print("State: Idle")
 			idle_timer -= delta
 			if idle_timer <= 0:
 				#is_idling = false
@@ -165,16 +175,26 @@ func _physics_process(delta: float) -> void:
 			return
 		
 		KittyStates.WALK:
-			print("State: Walk")
+			#print("State: Walk")
 			kitty_sprite.play("Walk")
+			speed = 300
+			
+			kitty_sprite.flip_h = !DisplayServer.mouse_get_position().x < DisplayServer.window_get_position().x + 100
+			if kitty_sprite.flip_h == true:
+				direction.x = 1
+			else:
+				direction.x = -1
+			
+			if DisplayServer.mouse_get_position().x == DisplayServer.window_get_position().x + 100:
+				current_state = KittyStates.SLEEP
 			
 			window_position += direction * speed * delta
-			
-			if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
-				direction.x *= -1
-				kitty_sprite.flip_h = !kitty_sprite.flip_h
-				maybe_idle()
-				
+			#
+			#if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
+				#direction.x *= -1
+				#kitty_sprite.flip_h = !kitty_sprite.flip_h
+				#maybe_idle()
+				#
 			#if window_position.y <= 0 or window_position.y >= screen_size.y - window_size.y:
 				#direction.y *= 1
 				#maybe_idle()
@@ -183,7 +203,7 @@ func _physics_process(delta: float) -> void:
 			window_position.y = clamp(window_position.y, 0, taskbar_y - window_size.y)
 			DisplayServer.window_set_position((Vector2i(window_position)))
 		KittyStates.FALL:
-			print("State: Fall")
+			#print("State: Fall")
 			kitty_sprite.play("Idle")
 			if window_position.y >= taskbar_y - window_size.y:
 				#is_falling = false
@@ -204,7 +224,59 @@ func _physics_process(delta: float) -> void:
 			window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
 			window_position.y = clamp(window_position.y, 0, taskbar_y - window_size.y)
 			DisplayServer.window_set_position((Vector2i(window_position)))
-	
+		
+		KittyStates.FOLLOW:
+			var mouse = DisplayServer.mouse_get_position()
+			var pet = Vector2(window_position) + Vector2(100, 100)
+			var directon = (Vector2(mouse) - pet).normalized()
+			
+			window_position += direction * speed * delta
+			
+			if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
+				direction.x *= -1
+				kitty_sprite.flip_h = !kitty_sprite.flip_h
+				maybe_idle()
+				
+			#if window_position.y <= 0 or window_position.y >= screen_size.y - window_size.y:
+				#direction.y *= 1
+				#maybe_idle()
+				
+			window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
+			window_position.y = clamp(window_position.y, 0, taskbar_y - window_size.y)
+			DisplayServer.window_set_position((Vector2i(window_position)))
+		
+		KittyStates.SLEEP:
+			if !centered:
+				window_position.x = DisplayServer.mouse_get_position().x - 100
+				DisplayServer.window_set_position((Vector2i(window_position)))
+				centered = true
+			#print("Current state: Sleep")
+			kitty_sprite.play("Idle")
+			speed = 0
+			
+			
+			var current_mouse_pos = DisplayServer.mouse_get_position().x
+			if current_mouse_pos == last_mouse_pos:
+				pass
+			else:
+				last_mouse_pos = current_mouse_pos
+				await get_tree().create_timer(2.0).timeout
+				current_state = KittyStates.WALK
+			#print("mouse x: ", DisplayServer.mouse_get_position().x)
+			#print("window middle: ", DisplayServer.window_get_position().x + 100)
+			
+			#if DisplayServer.mouse_get_position().x != DisplayServer.window_get_position().x + 100:
+				#print("time to walk again")
+				##wait(5)
+				#current_state = KittyStates.WALK
+			
+			#if DisplayServer.mouse_get_position().x > DisplayServer.window_get_position().x:
+				#current_state = KittyStates.WALK
+			#if window_position.x == DisplayServer.mouse_get_position().x - 100:
+				#print("still sleeping")
+				##current_state = KittyStates.WALK
+			#else: 
+				#current_state = KittyStates.WALK
 	#window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
 	#window_position.y = clamp(window_position.y, 0, taskbar_y - window_size.y)
 	#DisplayServer.window_set_position((Vector2i(window_position)))

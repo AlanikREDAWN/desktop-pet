@@ -11,7 +11,6 @@
 	- [ ]
 - [ ] on hover:
 - [ ] on scroll wheel: toggle between sleep and awake states
-- [ ] throw
 - [ ] while holding mouse down: cat follows mouse
 	- [ ] after releasing, cat returns to taskbar
 - [ ] while sitting still, cat faces mouse
