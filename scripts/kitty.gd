@@ -14,6 +14,7 @@ var idle_timer = 0.0
 #
 #var is_dragging = false
 var drag_offset = Vector2()
+#var ball_drag_offset = Vector2()
 
 var usable 
 var taskbar_y
@@ -22,19 +23,29 @@ var last_mouse = Vector2()
 #var velocity = Vector2()
 var velocity = Vector2()
 
-enum KittyStates { IDLE, WALK, FALL, DRAG, FOLLOW, SLEEP }
+enum KittyStates { IDLE, WALK, FALL, DRAG, FOLLOW, SLEEP, HOVER }
 var current_state = KittyStates.FALL
+
+#enum BallStates { DRAG, IDLE }
+#var ball_state = BallStates.IDLE
 
 var last_mouse_pos: int
 
+
+
+@onready var ballWindow: Window = $ball
+#@onready var ball_sprite: AnimatedSprite2D = $ball/AnimatedSprite2D
+
+
 @onready var kitty_sprite: AnimatedSprite2D = $kittyNode/AnimatedSprite2D
 @onready var area: Area2D = $kittyNode/Area2D
+#@onready var ball_area: Area2D = $ball/Area2D
 
-func _input(event):
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		print("FOLLOW")
-		if current_state != KittyStates.DRAG:
-			print("TIME TO FOLLOW")
+#func _input(event):
+	#if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		#print("FOLLOW")
+		#if current_state != KittyStates.DRAG:
+			#print("TIME TO FOLLOW")
 
 func _on_area_input(_viewport, event, _shape_idx):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -54,6 +65,37 @@ func _on_area_input(_viewport, event, _shape_idx):
 			#is_walking = false
 		#else:
 			#is_dragging = false
+			
+		if event.double_click:
+			#print("double click")
+			if Global.ballActive:
+				Global.removeBall.emit()
+				Global.ballActive = false
+				current_state = KittyStates.WALK
+			else:
+				Global.activateBall.emit()
+				Global.ballActive = true
+				current_state = KittyStates.FOLLOW
+			#ballWindow.show()
+			#ballWindow.always_on_top = true
+			#ballWindow.transparent = true
+			#
+			#ballWindow.position = Vector2i(DisplayServer.mouse_get_position().x, DisplayServer.mouse_get_position().y - 300)
+			#ball_state = BallStates.IDLE
+			
+#func _on_ball_input(_viewport, event, _shape_idx):
+	#if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		#if event.pressed:
+			#ball_state = BallStates.DRAG
+			#var mouse_pos = Vector2(DisplayServer.mouse_get_position())
+			##var win_pos = Vector2(DisplayServer.window_get_position())
+			#var win_pos = ballWindow.position
+			#print(win_pos)
+			#ball_drag_offset = mouse_pos - win_pos
+			#print("Drag")
+		#else:
+			#ball_state = BallStates.IDLE
+
 
 func maybe_idle():
 	if randf() < 0.3:
@@ -75,7 +117,7 @@ func _ready() -> void:
 	kitty_sprite.flip_h = !kitty_sprite.flip_h
 	area.input_event.connect(_on_area_input)
 	last_mouse_pos = DisplayServer.mouse_get_position().x
-
+	#ball_area.input_event.connect(_on_ball_input)
 	
 	
 
@@ -137,8 +179,28 @@ func simulate_key(keycode: Key):
 		#print("Key String: ", OS.get_keycode_string(event.keycode))
 
 func _physics_process(delta: float) -> void:
+	if Global.ballActive and !(current_state == KittyStates.FALL) and !(current_state == KittyStates.DRAG):
+		current_state = KittyStates.FOLLOW
+	
 	var window_position = Vector2(DisplayServer.window_get_position())
 	
+	if !(window_position.y == taskbar_y - window_size.y) and current_state != KittyStates.DRAG and !(current_state == KittyStates.FOLLOW):
+		current_state = KittyStates.FALL
+		#print("equal")
+	
+	#match ball_state:
+		#BallStates.IDLE:
+			#ball_sprite.play("idle")
+			#
+		#BallStates.DRAG:
+			#print("drag")
+			#ball_sprite.play("drag")
+			#
+			#var mouse_pos = Vector2(DisplayServer.mouse_get_position())
+			#var new_win_pos = mouse_pos - ball_drag_offset
+			#ballWindow.position = Vector2i(new_win_pos)
+			
+			
 	match current_state:
 		KittyStates.DRAG:
 			#print("State: Drag")
@@ -208,8 +270,9 @@ func _physics_process(delta: float) -> void:
 			if window_position.y >= taskbar_y - window_size.y:
 				#is_falling = false
 				#is_walking = true
-				current_state = KittyStates.WALK
-				print("not falling")
+				if !(current_state == KittyStates.FOLLOW):
+					current_state = KittyStates.WALK
+				#print("not falling")
 			#window_position.y = taskbar_y - window_size.y
 			
 
@@ -226,9 +289,11 @@ func _physics_process(delta: float) -> void:
 			DisplayServer.window_set_position((Vector2i(window_position)))
 		
 		KittyStates.FOLLOW:
-			var mouse = DisplayServer.mouse_get_position()
+			print("following")
+			var ball = ballWindow.position
+			print(ball)
 			var pet = Vector2(window_position) + Vector2(100, 100)
-			var directon = (Vector2(mouse) - pet).normalized()
+			var directon = (Vector2(ball) - pet).normalized()
 			
 			window_position += direction * speed * delta
 			
@@ -281,6 +346,9 @@ func _physics_process(delta: float) -> void:
 	#window_position.y = clamp(window_position.y, 0, taskbar_y - window_size.y)
 	#DisplayServer.window_set_position((Vector2i(window_position)))
 	
+		KittyStates.HOVER:
+			kitty_sprite.play("Idle")
+			speed = 0
 	#if is_dragging:
 		#kitty_sprite.play("Idle")
 		#var mouse_pos = Vector2(DisplayServer.mouse_get_position())
@@ -341,3 +409,21 @@ func _physics_process(delta: float) -> void:
 	#window_position.x = clamp(window_position.x, 0, screen_size.x - window_size.x)
 	#window_position.y = clamp(window_position.y, 0, taskbar_y - window_size.y)
 	#DisplayServer.window_set_position((Vector2i(window_position)))
+
+#
+#func _on_area_2d_mouse_entered() -> void:
+	#current_state = KittyStates.HOVER
+#
+#
+#func _on_area_2d_mouse_exited() -> void:
+	#current_state = KittyStates.WALK
+
+
+func _on_area_2d_mouse_entered() -> void:
+	if !(current_state == KittyStates.DRAG):
+		current_state = KittyStates.HOVER
+
+
+func _on_area_2d_mouse_exited() -> void:
+	if !(current_state == KittyStates.DRAG) and !(current_state == KittyStates.FOLLOW):
+		current_state = KittyStates.WALK
