@@ -10,10 +10,11 @@ config_version=5
 
 [application]
 
-config/name="Desktop Pet"
+config/name="Kitty Pet"
 run/main_scene="uid://dfna35k5wver3"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
+boot_splash/image="uid://b7ste7qjc7f74"
+config/icon="uid://bl7ef0t8oykg5"
 
 [autoload]
 
@@ -80,4 +81,5 @@ down={
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
 viewport/transparent_background=true
