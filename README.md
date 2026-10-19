@@ -6,6 +6,10 @@ It will run around and chase your mouse from the bottom of the screen. You can p
 
 I know there is a little bit of a bug where the cat will glitch between sleeping and walking after you double click a second time to make the ball disappear, and I plan on fixing it shortly.
 
+## To install
+
+Download the right file for your OS [here](https://kittycat81.itch.io/kitty-desktop-pet), and open and run it!
+
 ## Feature Ideas/Brainstorming
 
 - [ ] spawn ball and play with it
