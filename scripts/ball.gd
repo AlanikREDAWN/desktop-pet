@@ -14,6 +14,9 @@ func _ready() -> void:
 	Global.activateBall.connect(_activate_ball)
 	Global.removeBall.connect(_remove_ball)
 	#ball_area.input_event.connect(_on_ball_input)
+	
+
+	
 
 func _remove_ball() -> void:
 	hide()
@@ -24,7 +27,7 @@ func _activate_ball() -> void:
 	always_on_top = true
 	transparent = true
 
-	position = Vector2i(DisplayServer.mouse_get_position().x, DisplayServer.mouse_get_position().y - 300)
+	position = Vector2i(DisplayServer.mouse_get_position().x - 300, DisplayServer.mouse_get_position().y - 500)
 	ball_state = BallStates.IDLE
 
 #func _on_ball_input(_viewport, event, _shape_idx):
@@ -70,3 +73,8 @@ func _physics_process(delta: float) -> void:
 					var new_win_pos = mouse_pos - ball_drag_offset
 					position = Vector2i(new_win_pos)
 					#DisplayServer.window_set_position(Vector2i(new_win_pos))
+
+#
+#func _on_area_2d_area_entered(area: Area2D) -> void:
+	#if area.is_in_group("kitty"):
+		#print("kitty has caught the ball")

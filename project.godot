@@ -35,6 +35,10 @@ window/per_pixel_transparency/allowed=true
 
 enabled=PackedStringArray("res://addons/godot_super-wakatime/plugin.cfg", "res://addons/markdown_previewer/plugin.cfg")
 
+[global_group]
+
+kitty=""
+
 [input]
 
 space={

@@ -1,9 +1,16 @@
 extends Node2D
 
+@onready var kitty_window: Window = get_window()
+@onready var ball_window: Window = $ball
+
+@onready var kitty_area: Area2D = $kittyNode/Area2D
+@onready var ball_area: Area2D = $ball/Area2D
+
 var speed = 300
 var fall_speed = 500
 var direction = Vector2(1, 0)
 var screen_size = Vector2()
+var screen
 var window_size = Vector2(200, 200)
 
 var centered = false
@@ -111,6 +118,7 @@ func maybe_idle():
 
 func _ready() -> void:
 	screen_size = Vector2(DisplayServer.screen_get_size())
+	#screen = DisplayServer.screen_get_size()
 	usable = DisplayServer.screen_get_usable_rect()
 	taskbar_y = usable.end.y
 	kitty_sprite.play("Walk")
@@ -132,7 +140,7 @@ func simulate_key(keycode: Key):
 	press_event.keycode = keycode
 	press_event.pressed = true
 	Input.parse_input_event(press_event)
-	print("press event")
+	#print("press event")
 	
 	#wait(0.25)
 	
@@ -140,7 +148,7 @@ func simulate_key(keycode: Key):
 	release_event.keycode = keycode
 	press_event.pressed = false
 	Input.parse_input_event(release_event)
-	print("release event")
+	#print("release event")
 
 #func nextTrack() -> void:
 	#var os_name = OS.get_name()
@@ -178,16 +186,51 @@ func simulate_key(keycode: Key):
 		#print("Keycode: ", event.keycode)
 		#print("Key String: ", OS.get_keycode_string(event.keycode))
 
+func _process(delta: float) -> void:
+	var kitty_rect = Rect2i(kitty_window.position, kitty_window.size)
+	var ball_rect = Rect2i(ball_window.position, ball_window.size)
+	
+	if kitty_rect.intersects(ball_rect) and Global.ballActive:
+		print("kitty has caught the ball")
+		current_state = KittyStates.FALL
+	#var kitty_area_screen = kitty_window.position + Vector2i(kitty_area.global_position)
+	#var ball_area_screen = ballWindow.position + Vector2i(ball_area.global_position)
+	
+	#var ball_shape: CircleShape2D = ball_area.get_node("CollisionShape2D").shape
+	#var ball_radius: float = ball_shape.radius
+	#
+	#var is_colliding: bool = false
+	#
+	#var kitty_shape: RectangleShape2D = kitty_area.get_node("CollisionShape2D").shape
+	#
+	#var kitty_rect = Rect2(Vector2(kitty_area_screen) - (kitty_shape.size / 2.0), kitty_shape.size)
+	#var circle_center = Vector2(ball_area_screen)
+	#var closest_x = clampf(circle_center.x, kitty_rect.position.x, kitty_rect.end.x)
+	#var closest_y = clampf(circle_center.y, kitty_rect.position.y, kitty_rect.end.y)
+	#var closest_point = Vector2(closest_x, closest_y)
+	#
+	#is_colliding = closest_point.distance_to(circle_center) < ball_radius
+	#
+	#if is_colliding and Global.ballActive:
+		#print("kitty has caught the ball")
+
+
 func _physics_process(delta: float) -> void:
-	if Global.ballActive and !(current_state == KittyStates.FALL) and !(current_state == KittyStates.DRAG):
-		current_state = KittyStates.FOLLOW
+
 	
 	var window_position = Vector2(DisplayServer.window_get_position())
 	
 	if !(window_position.y == taskbar_y - window_size.y) and current_state != KittyStates.DRAG and !(current_state == KittyStates.FOLLOW):
 		current_state = KittyStates.FALL
+		#print("test")
 		#print("equal")
-	
+		
+	#if !(window_position.y == window_size.y) or !(window_position.y + 10 == taskbar_y - window_size.y):
+		#print(window_position.y)
+		#print(taskbar_y)
+		#print(taskbar_y - window_size.y)
+	if Global.ballActive and !(current_state == KittyStates.FALL) and !(current_state == KittyStates.DRAG):
+		current_state = KittyStates.FOLLOW
 	#match ball_state:
 		#BallStates.IDLE:
 			#ball_sprite.play("idle")
@@ -289,19 +332,28 @@ func _physics_process(delta: float) -> void:
 			DisplayServer.window_set_position((Vector2i(window_position)))
 		
 		KittyStates.FOLLOW:
-			print("following")
+			kitty_sprite.play("Walk")
+			speed = 300
+			#print("following")
 			var ball = ballWindow.position
-			print(ball)
-			var pet = Vector2(window_position) + Vector2(100, 100)
-			var directon = (Vector2(ball) - pet).normalized()
+			#print(ball)
+			var pet = Vector2(DisplayServer.window_get_position()) + Vector2(100, 100)
+			direction = (Vector2(ball) - pet).normalized()
 			
+			
+			kitty_sprite.flip_h = !ball.x < DisplayServer.window_get_position().x + 100
 			window_position += direction * speed * delta
 			
-			if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
-				direction.x *= -1
-				kitty_sprite.flip_h = !kitty_sprite.flip_h
-				maybe_idle()
-				
+			#if kitty_sprite.flip_h == true:
+				#direction.x = 1
+			#else:
+				#direction.x = -1
+			
+			#if window_position.x <= 0 or window_position.x >= screen_size.x - window_size.x:
+				##direction.x *= -1
+				#kitty_sprite.flip_h = !kitty_sprite.flip_h
+				#maybe_idle()
+				#
 			#if window_position.y <= 0 or window_position.y >= screen_size.y - window_size.y:
 				#direction.y *= 1
 				#maybe_idle()
@@ -420,7 +472,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_area_2d_mouse_entered() -> void:
-	if !(current_state == KittyStates.DRAG):
+	if !(current_state == KittyStates.DRAG) and !(current_state == KittyStates.FOLLOW):
 		current_state = KittyStates.HOVER
 
 
